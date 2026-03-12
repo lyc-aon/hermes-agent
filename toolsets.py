@@ -64,6 +64,8 @@ _HERMES_CORE_TOOLS = [
     "query_user_context",
     # Home Assistant smart home control (gated on HASS_TOKEN via check_fn)
     "ha_list_entities", "ha_get_state", "ha_list_services", "ha_call_service",
+    # ElevenLabs audio generation (gated on ELEVENLABS_API_KEY via check_fn)
+    "generate_sound_effect", "generate_music", "generate_dialogue",
 ]
 
 
@@ -202,6 +204,11 @@ TOOLSETS = {
         "includes": []
     },
 
+    "audio_gen": {
+        "description": "Audio generation: sound effects, music, and dialogue via ElevenLabs",
+        "tools": ["generate_sound_effect", "generate_music", "generate_dialogue"],
+        "includes": []
+    },
 
     # Scenario-specific toolsets
     
