@@ -692,21 +692,25 @@ def _configure_simple_requirements(ts_key: str):
 
 
 def _reconfigure_tool(config: dict):
-    """Let user reconfigure an existing tool's provider or API key."""
-    # Build list of configurable tools that are currently set up
+    """Let user configure or reconfigure a tool's provider or API key."""
+    # Build list of all configurable tools (both configured and unconfigured)
     configurable = []
     for ts_key, ts_label, _ in CONFIGURABLE_TOOLSETS:
         cat = TOOL_CATEGORIES.get(ts_key)
         reqs = TOOLSET_ENV_REQUIREMENTS.get(ts_key)
         if cat or reqs:
-            if _toolset_has_keys(ts_key):
-                configurable.append((ts_key, ts_label))
+            configurable.append((ts_key, ts_label))
 
     if not configurable:
-        _print_info("No configured tools to reconfigure.")
+        _print_info("No configurable tools available.")
         return
 
-    choices = [label for _, label in configurable]
+    choices = []
+    for ts_key, ts_label in configurable:
+        if _toolset_has_keys(ts_key):
+            choices.append(f"{ts_label}  [configured]")
+        else:
+            choices.append(f"{ts_label}  [not configured]")
     choices.append("Cancel")
 
     idx = _prompt_choice("  Which tool would you like to reconfigure?", choices, len(choices) - 1)
@@ -716,11 +720,18 @@ def _reconfigure_tool(config: dict):
 
     ts_key, ts_label = configurable[idx]
     cat = TOOL_CATEGORIES.get(ts_key)
+    has_keys = _toolset_has_keys(ts_key)
 
     if cat:
-        _configure_tool_category_for_reconfig(ts_key, cat, config)
+        if has_keys:
+            _configure_tool_category_for_reconfig(ts_key, cat, config)
+        else:
+            _configure_tool_category(ts_key, cat, config)
     else:
-        _reconfigure_simple_requirements(ts_key)
+        if has_keys:
+            _reconfigure_simple_requirements(ts_key)
+        else:
+            _configure_simple_requirements(ts_key)
 
     save_config(config)
 
