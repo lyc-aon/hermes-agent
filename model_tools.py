@@ -95,6 +95,9 @@ def _discover_tools():
         "tools.send_message_tool",
         "tools.honcho_tools",
         "tools.homeassistant_tool",
+        "tools.image_processing_tools",
+        "tools.ast_tools",
+        "tools.openai_image_tool",
         "tools.elevenlabs_audio_tool",
     ]
     import importlib

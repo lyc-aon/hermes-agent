@@ -94,12 +94,14 @@ CONFIGURABLE_TOOLSETS = [
     ("cronjob",         "⏰ Cron Jobs",                 "schedule, list, remove"),
     ("rl",              "🧪 RL Training",               "Tinker-Atropos training tools"),
     ("homeassistant",    "🏠 Home Assistant",           "smart home device control"),
+    ("image_processing", "🖼️  Image Processing",         "analyze, crop, resize, effects, sprites"),
+    ("audio_gen",        "🎵 Audio Generation",          "sound effects, music, dialogue"),
 ]
 
 # Toolsets that are OFF by default for new installs.
 # They're still in _HERMES_CORE_TOOLS (available at runtime if enabled),
 # but the setup checklist won't pre-select them for first-time users.
-_DEFAULT_OFF_TOOLSETS = {"moa", "homeassistant", "rl"}
+_DEFAULT_OFF_TOOLSETS = {"moa", "homeassistant", "rl", "audio_gen"}
 
 # Platform display config
 PLATFORMS = {
@@ -150,12 +152,19 @@ TOOL_CATEGORIES = {
     "web": {
         "name": "Web Search & Extract",
         "setup_title": "Select Search Provider",
-        "setup_note": "A free DuckDuckGo search skill is also included — skip this if you don't need Firecrawl.",
+        "setup_note": "A free DuckDuckGo search skill is also included — skip this if you don't need a paid provider.",
         "icon": "🔍",
         "providers": [
             {
+                "name": "Brave Search",
+                "tag": "Fast, independent search index — 2K free queries/month",
+                "env_vars": [
+                    {"key": "BRAVE_API_KEY", "prompt": "Brave Search API key", "url": "https://brave.com/search/api/"},
+                ],
+            },
+            {
                 "name": "Firecrawl Cloud",
-                "tag": "Recommended - hosted service",
+                "tag": "Search + scraping in one service",
                 "env_vars": [
                     {"key": "FIRECRAWL_API_KEY", "prompt": "Firecrawl API key", "url": "https://firecrawl.dev"},
                 ],
@@ -178,6 +187,37 @@ TOOL_CATEGORIES = {
                 "tag": "FLUX 2 Pro with auto-upscaling",
                 "env_vars": [
                     {"key": "FAL_KEY", "prompt": "FAL API key", "url": "https://fal.ai/dashboard/keys"},
+                ],
+            },
+            {
+                "name": "OpenAI (gpt-image-1.5)",
+                "tag": "Best instruction following & text rendering",
+                "env_vars": [
+                    {"key": "OPENAI_IMAGE_API_KEY", "prompt": "OpenAI API key (for image gen)", "url": "https://platform.openai.com/api-keys"},
+                ],
+            },
+        ],
+    },
+    "image_processing": {
+        "name": "Image Processing",
+        "icon": "🖼️",
+        "providers": [
+            {
+                "name": "Pillow (local)",
+                "tag": "Free - no API key needed",
+                "env_vars": [],
+            },
+        ],
+    },
+    "audio_gen": {
+        "name": "Audio Generation",
+        "icon": "🎵",
+        "providers": [
+            {
+                "name": "ElevenLabs",
+                "tag": "SFX, music, and multi-speaker dialogue",
+                "env_vars": [
+                    {"key": "ELEVENLABS_API_KEY", "prompt": "ElevenLabs API key", "url": "https://elevenlabs.io/app/settings/api-keys"},
                 ],
             },
         ],

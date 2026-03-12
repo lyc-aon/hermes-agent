@@ -366,11 +366,13 @@ def _print_setup_summary(config: dict, hermes_home):
         tool_status.append(("Vision (image analysis)", False, "OPENROUTER_API_KEY"))
         tool_status.append(("Mixture of Agents", False, "OPENROUTER_API_KEY"))
 
-    # Firecrawl (web tools)
-    if get_env_value("FIRECRAWL_API_KEY") or get_env_value("FIRECRAWL_API_URL"):
-        tool_status.append(("Web Search & Extract", True, None))
+    # Web search (Brave or Firecrawl)
+    if get_env_value("BRAVE_API_KEY"):
+        tool_status.append(("Web Search (Brave)", True, None))
+    elif get_env_value("FIRECRAWL_API_KEY") or get_env_value("FIRECRAWL_API_URL"):
+        tool_status.append(("Web Search & Extract (Firecrawl)", True, None))
     else:
-        tool_status.append(("Web Search & Extract", False, "FIRECRAWL_API_KEY"))
+        tool_status.append(("Web Search & Extract", False, "BRAVE_API_KEY or FIRECRAWL_API_KEY"))
 
     # Browser tools (local Chromium or Browserbase cloud)
     import shutil
@@ -390,11 +392,24 @@ def _print_setup_summary(config: dict, hermes_home):
             ("Browser Automation", False, "npm install -g agent-browser")
         )
 
-    # FAL (image generation)
-    if get_env_value("FAL_KEY"):
-        tool_status.append(("Image Generation", True, None))
+    # Image generation (FAL or OpenAI)
+    if get_env_value("FAL_KEY") and get_env_value("OPENAI_IMAGE_API_KEY"):
+        tool_status.append(("Image Generation (FAL + OpenAI)", True, None))
+    elif get_env_value("FAL_KEY"):
+        tool_status.append(("Image Generation (FAL)", True, None))
+    elif get_env_value("OPENAI_IMAGE_API_KEY") or get_env_value("OPENAI_API_KEY"):
+        tool_status.append(("Image Generation (OpenAI)", True, None))
     else:
-        tool_status.append(("Image Generation", False, "FAL_KEY"))
+        tool_status.append(("Image Generation", False, "FAL_KEY or OPENAI_IMAGE_API_KEY"))
+
+    # Image processing (Pillow — always available)
+    tool_status.append(("Image Processing (Pillow)", True, None))
+
+    # Audio generation (ElevenLabs)
+    if get_env_value("ELEVENLABS_API_KEY"):
+        tool_status.append(("Audio Generation (ElevenLabs)", True, None))
+    else:
+        tool_status.append(("Audio Generation", False, "ELEVENLABS_API_KEY"))
 
     # TTS — show configured provider
     tts_provider = config.get("tts", {}).get("provider", "edge")

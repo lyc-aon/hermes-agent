@@ -412,6 +412,14 @@ OPTIONAL_ENV_VARS = {
         "password": True,
         "category": "tool",
     },
+    "OPENAI_IMAGE_API_KEY": {
+        "description": "OpenAI API key for image generation (gpt-image-1.5). Falls back to OPENAI_API_KEY if not set.",
+        "prompt": "OpenAI API key (for image generation)",
+        "url": "https://platform.openai.com/api-keys",
+        "tools": ["openai_image_generate"],
+        "password": True,
+        "category": "tool",
+    },
     "TINKER_API_KEY": {
         "description": "Tinker API key for RL training",
         "prompt": "Tinker API key",
@@ -437,9 +445,18 @@ OPTIONAL_ENV_VARS = {
         "category": "tool",
     },
     "ELEVENLABS_API_KEY": {
-        "description": "ElevenLabs API key for premium text-to-speech voices",
+        "description": "ElevenLabs API key for TTS and audio generation (SFX, music, dialogue)",
         "prompt": "ElevenLabs API key",
         "url": "https://elevenlabs.io/",
+        "tools": ["text_to_speech", "generate_sound_effect", "generate_music", "generate_dialogue"],
+        "password": True,
+        "category": "tool",
+    },
+    "BRAVE_API_KEY": {
+        "description": "Brave Search API key for web search (alternative to Firecrawl)",
+        "prompt": "Brave Search API key",
+        "url": "https://brave.com/search/api/",
+        "tools": ["web_search"],
         "password": True,
         "category": "tool",
     },
@@ -1056,8 +1073,10 @@ def show_config():
         ("FIRECRAWL_API_KEY", "Firecrawl"),
         ("BROWSERBASE_API_KEY", "Browserbase"),
         ("FAL_KEY", "FAL"),
+        ("OPENAI_IMAGE_API_KEY", "OpenAI Image"),
+        ("BRAVE_API_KEY", "Brave Search"),
     ]
-    
+
     for env_key, name in keys:
         value = get_env_value(env_key)
         print(f"  {name:<14} {redact_key(value)}")

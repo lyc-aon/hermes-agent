@@ -427,20 +427,52 @@ def clean_base64_images(text: str) -> str:
     return cleaned_text
 
 
+def _brave_search(query: str, limit: int = 5) -> list:
+    """Search using Brave Search API. Returns list of result dicts."""
+    import requests
+    api_key = os.getenv("BRAVE_API_KEY")
+    resp = requests.get(
+        "https://api.search.brave.com/res/v1/web/search",
+        headers={"Accept": "application/json", "Accept-Encoding": "gzip", "X-Subscription-Token": api_key},
+        params={"q": query, "count": limit},
+        timeout=15,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    results = []
+    for i, item in enumerate(data.get("web", {}).get("results", [])[:limit]):
+        results.append({
+            "title": item.get("title", ""),
+            "url": item.get("url", ""),
+            "description": item.get("description", ""),
+            "position": i + 1,
+        })
+    return results
+
+
+def _get_search_backend() -> str:
+    """Determine which search backend to use. Returns 'brave' or 'firecrawl'."""
+    if os.getenv("BRAVE_API_KEY"):
+        return "brave"
+    if os.getenv("FIRECRAWL_API_KEY") or os.getenv("FIRECRAWL_API_URL"):
+        return "firecrawl"
+    return "none"
+
+
 def web_search_tool(query: str, limit: int = 5) -> str:
     """
     Search the web for information using available search API backend.
-    
+
     This function provides a generic interface for web search that can work
-    with multiple backends. Currently uses Firecrawl.
-    
+    with multiple backends. Supports Brave Search and Firecrawl.
+
     Note: This function returns search result metadata only (URLs, titles, descriptions).
     Use web_extract_tool to get full content from specific URLs.
-    
+
     Args:
         query (str): The search query to look up
         limit (int): Maximum number of results to return (default: 5)
-    
+
     Returns:
         str: JSON string containing search results with the following structure:
              {
@@ -457,7 +489,7 @@ def web_search_tool(query: str, limit: int = 5) -> str:
                      ]
                  }
              }
-    
+
     Raises:
         Exception: If search fails or API key is not set
     """
@@ -471,48 +503,50 @@ def web_search_tool(query: str, limit: int = 5) -> str:
         "original_response_size": 0,
         "final_response_size": 0
     }
-    
+
     try:
         from tools.interrupt import is_interrupted
         if is_interrupted():
             return json.dumps({"error": "Interrupted", "success": False})
 
-        logger.info("Searching the web for: '%s' (limit: %d)", query, limit)
-        
-        response = _get_firecrawl_client().search(
-            query=query,
-            limit=limit
-        )
-        
-        # The response is a SearchData object with web, news, and images attributes
-        # When not scraping, the results are directly in these attributes
+        backend = _get_search_backend()
+        logger.info("Searching the web for: '%s' (limit: %d, backend: %s)", query, limit, backend)
+
         web_results = []
-        
-        # Check if response has web attribute (SearchData object)
-        if hasattr(response, 'web'):
-            # Response is a SearchData object with web attribute
-            if response.web:
-                # Convert each SearchResultWeb object to dict
-                for result in response.web:
-                    if hasattr(result, 'model_dump'):
-                        # Pydantic model - use model_dump
-                        web_results.append(result.model_dump())
-                    elif hasattr(result, '__dict__'):
-                        # Regular object - use __dict__
-                        web_results.append(result.__dict__)
-                    elif isinstance(result, dict):
-                        # Already a dict
-                        web_results.append(result)
-        elif hasattr(response, 'model_dump'):
-            # Response has model_dump method - use it to get dict
-            response_dict = response.model_dump()
-            if 'web' in response_dict and response_dict['web']:
-                web_results = response_dict['web']
-        elif isinstance(response, dict):
-            # Response is already a dictionary
-            if 'web' in response and response['web']:
-                web_results = response['web']
-        
+
+        if backend == "brave":
+            web_results = _brave_search(query, limit)
+        elif backend == "firecrawl":
+            response = _get_firecrawl_client().search(
+                query=query,
+                limit=limit
+            )
+
+            # The response is a SearchData object with web, news, and images attributes
+            # When not scraping, the results are directly in these attributes
+
+            # Check if response has web attribute (SearchData object)
+            if hasattr(response, 'web'):
+                # Response is a SearchData object with web attribute
+                if response.web:
+                    # Convert each SearchResultWeb object to dict
+                    for result in response.web:
+                        if hasattr(result, 'model_dump'):
+                            web_results.append(result.model_dump())
+                        elif hasattr(result, '__dict__'):
+                            web_results.append(result.__dict__)
+                        elif isinstance(result, dict):
+                            web_results.append(result)
+            elif hasattr(response, 'model_dump'):
+                response_dict = response.model_dump()
+                if 'web' in response_dict and response_dict['web']:
+                    web_results = response_dict['web']
+            elif isinstance(response, dict):
+                if 'web' in response and response['web']:
+                    web_results = response['web']
+        else:
+            return json.dumps({"error": "No search backend configured. Set BRAVE_API_KEY or FIRECRAWL_API_KEY.", "success": False})
+
         results_count = len(web_results)
         logger.info("Found %d search results", results_count)
         
@@ -1106,11 +1140,16 @@ async def web_crawl_tool(
 def check_firecrawl_api_key() -> bool:
     """
     Check if the Firecrawl API key is available in environment variables.
-    
+
     Returns:
         bool: True if API key is set, False otherwise
     """
     return bool(os.getenv("FIRECRAWL_API_KEY"))
+
+
+def check_web_search_available() -> bool:
+    """Check if any web search backend is available (Brave or Firecrawl)."""
+    return bool(os.getenv("BRAVE_API_KEY") or os.getenv("FIRECRAWL_API_KEY") or os.getenv("FIRECRAWL_API_URL"))
 
 
 def check_auxiliary_model() -> bool:
@@ -1256,8 +1295,8 @@ registry.register(
     toolset="web",
     schema=WEB_SEARCH_SCHEMA,
     handler=lambda args, **kw: web_search_tool(args.get("query", ""), limit=5),
-    check_fn=check_firecrawl_api_key,
-    requires_env=["FIRECRAWL_API_KEY"],
+    check_fn=check_web_search_available,
+    requires_env=["BRAVE_API_KEY or FIRECRAWL_API_KEY"],
 )
 registry.register(
     name="web_extract",
