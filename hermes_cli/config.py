@@ -412,6 +412,14 @@ OPTIONAL_ENV_VARS = {
         "password": True,
         "category": "tool",
     },
+    "OPENAI_IMAGE_API_KEY": {
+        "description": "OpenAI API key for image generation (gpt-image-1.5). Falls back to OPENAI_API_KEY if not set.",
+        "prompt": "OpenAI API key (for image generation)",
+        "url": "https://platform.openai.com/api-keys",
+        "tools": ["openai_image_generate"],
+        "password": True,
+        "category": "tool",
+    },
     "TINKER_API_KEY": {
         "description": "Tinker API key for RL training",
         "prompt": "Tinker API key",
@@ -1056,6 +1064,7 @@ def show_config():
         ("FIRECRAWL_API_KEY", "Firecrawl"),
         ("BROWSERBASE_API_KEY", "Browserbase"),
         ("FAL_KEY", "FAL"),
+        ("OPENAI_IMAGE_API_KEY", "OpenAI Image"),
     ]
     
     for env_key, name in keys:
