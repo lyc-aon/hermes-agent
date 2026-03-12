@@ -64,6 +64,10 @@ _HERMES_CORE_TOOLS = [
     "query_user_context",
     # Home Assistant smart home control (gated on HASS_TOKEN via check_fn)
     "ha_list_entities", "ha_get_state", "ha_list_services", "ha_call_service",
+    # Image processing (gated on Pillow via check_fn)
+    "analyze_image_file", "crop_image", "resize_image", "convert_image",
+    "color_adjust", "optimize_image", "image_effects", "process_game_asset",
+    "remove_background", "extract_palette", "make_sprite_sheet",
 ]
 
 
@@ -199,6 +203,16 @@ TOOLSETS = {
     "homeassistant": {
         "description": "Home Assistant smart home control and monitoring",
         "tools": ["ha_list_entities", "ha_get_state", "ha_list_services", "ha_call_service"],
+        "includes": []
+    },
+
+    "image_processing": {
+        "description": "Image processing tools: analyze, crop, resize, convert, optimize, effects, palette extraction, sprite sheets, and game asset pipelines",
+        "tools": [
+            "analyze_image_file", "crop_image", "resize_image", "convert_image",
+            "color_adjust", "optimize_image", "image_effects", "process_game_asset",
+            "remove_background", "extract_palette", "make_sprite_sheet",
+        ],
         "includes": []
     },
 

@@ -53,6 +53,8 @@ pty = [
 honcho = ["honcho-ai>=2.0.1"]
 mcp = ["mcp>=1.2.0"]
 homeassistant = ["aiohttp>=3.9.0"]
+image = ["Pillow>=10.0"]
+image-extra = ["Pillow>=10.0", "rembg[cpu]", "PyTexturePacker"]
 yc-bench = ["yc-bench @ git+https://github.com/collinear-ai/yc-bench.git"]
 all = [
   "hermes-agent[modal]",
